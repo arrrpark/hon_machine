@@ -10,36 +10,34 @@ fish_weight = [242.0, 290.0, 340.0, 363.0, 430.0, 450.0, 500.0, 390.0, 450.0, 50
 fish_data = [[l, w] for l,w in zip(fish_length, fish_weight)]
 fish_target = [1] * 35 + [0] * 14
 
-from sklearn.neighbors import KNeighborsClassifier
-kn = KNeighborsClassifier()
-
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
 
-input_arr = np.array(fish_data)
-target_arr = np.array(fish_target)
+fish_data = np.column_stack((fish_length, fish_weight))
+train_input, test_input, train_target, test_target = train_test_split(fish_data, fish_target, stratify=fish_target, random_state=42)
 
-np.random.seed(42)
-index = np.arange(49)
-np.random.shuffle(index)
+print(test_target)
 
-print(index)
-
-train_input = input_arr[index[:35]]
-train_target = target_arr[index[:35]
-                          ]
-test_input = input_arr[index[35:]]
-test_target = target_arr[index[35:]]
-
-import matplotlib.pyplot as plt
-
-plt.scatter(train_input[:, 0], train_input[:, 1])
-plt.scatter(test_input[:, 0], test_input[:, 1])
-plt.xlabel('length')
-plt.ylabel('weight')
-plt.show()
-
+kn = KNeighborsClassifier()
 kn.fit(train_input, train_target)
 kn.score(test_input, test_target)
 
-kn.predict(test_input)
-print(test_target)
+print(kn.predict([[25,150]]))
+
+mean = np.mean(train_input, axis = 0)
+std = np.std(train_input, axis = 0)
+
+print(mean, std)
+
+train_scaled = (train_input - mean) / std
+print(train_scaled)
+
+import matplotlib.pyplot as plt
+
+new = ([25, 150] - mean) / std
+plt.scatter(train_scaled[:, 0], train_scaled[:, 1])
+plt.scatter(new[0], new[1], marker='^')
+plt.xlabel('length')
+plt.ylabel('weight')
+plt.show()
