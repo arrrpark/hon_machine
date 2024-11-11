@@ -1,46 +1,39 @@
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-wine = pd.read_csv('https://bit.ly/wine_csv_data')
-print(wine.describe())
+file_url = 'https://media.githubusercontent.com/media/musthave-ML10/data_source/main/salary.csv'
+data = pd.read_csv(file_url, skipinitialspace=True)
 
-data = wine[['alcohol', 'sugar', 'pH']].to_numpy()
-target = wine['class'].to_numpy()
+print(data.head())
+print(data.describe())
+
+data['class'] = data['class'].map({ '<=50K' : 0, '>50K': 1})
+data.drop('education', axis=1, inplace=True)
+print(data['occupation'].value_counts())
+
+country_group = data.groupby('native-country')['class'].mean()
+country_group = country_group.reset_index()
+
+data = data.merge(country_group, on='native-country', how='left')
+data.drop('native-country', axis=1, inplace=True)
+data = data.rename(columns={'class_x': 'class','class_y': 'native-country'})
+
+data['native-country'] = data['native-country'].fillna(-99)
+data['workclass'] = data['workclass'].fillna('Private')
+data['occupation'] = data['occupation'].fillna('Unknown')
+
+data = pd.get_dummies(data, drop_first=True)
+print(data)
 
 from sklearn.model_selection import train_test_split
-
-train_input, test_input, train_target, test_target = train_test_split(data, target, test_size=0.2, random_state=42)
-sub_input, val_input, sub_target, val_target = train_test_split(train_input, train_target, test_size=0.2, random_state=42)
-print(sub_input.shape, val_input.shape)
-
 from sklearn.tree import DecisionTreeClassifier
-dt = DecisionTreeClassifier(random_state=42)
-dt.fit(sub_input, sub_target)
-print(dt.score(sub_input, sub_target))
-print(dt.score(val_input, val_target))
+from sklearn.metrics import accuracy_score
 
-from sklearn.model_selection import cross_validate
+X_train, X_test, y_train, y_test = train_test_split(data.drop('class', axis=1), data['class'], test_size=0.4, random_state=100)
 
-scores = cross_validate(dt, train_input, train_target)
-print(scores)
-
-import numpy as np
-print(np.mean(scores['test_score']))
-
-from sklearn.model_selection import GridSearchCV
-params = {'min_impurity_decrease': [0.0001, 0.0002, 0.0003, 0.0004, 0.0005]}
-gs = GridSearchCV(DecisionTreeClassifier(random_state=42), params, n_jobs = -1)
-gs.fit(train_input, train_target)
-dt = gs.best_estimator_
-print(dt.score(train_input, train_target))
-
-params = {
-    'min_impurity_decrease': np.arange(0.0001, 0.001, 0.0001),
-    'max_depth': range(5, 20, 1),
-    'min_samples_split': range(2, 100, 10)
-}
-
-gs = GridSearchCV(DecisionTreeClassifier(random_state=42), params, n_jobs=-1)
-gs.fit(train_input, train_target)
-print(gs.best_params_)
-print(np.max(gs.cv_results_['mean_test_score']))
-# print(np.max(gs.cv_results_['mean_test_score']))
+model = DecisionTreeClassifier()
+model.fit(X_train, y_train)
+pred = model.predict(X_test)
+print(accuracy_score(y_test, pred))
