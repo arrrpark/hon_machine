@@ -26,16 +26,5 @@ def draw_fruits(arr, ratio=1):
 
     plt.show()
 
-# draw_fruits(fruits[km.labels_==0])
+draw_fruits(fruits[km.labels_==0])
 
-inertia = []
-
-for k in range(2, 7):
-    km = KMeans(n_clusters=k, n_init='auto', random_state=42)
-    km.fit(fruits_2d)
-    inertia.append(km.inertia_)
-
-    plt.plot(range(2,7), inertia)
-    plt.xlabel('k')
-    plt.ylabel('inertia')
-    plt.show()
